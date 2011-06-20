@@ -3,6 +3,7 @@
 /**
  * Controller designed to wrap around calls to defined services
  * 
+ * To call a service, use jsonservice/servicename/methodname
  * 
  * @author marcus@silverstripe.com.au
  * @license BSD License http://silverstripe.org/bsd-license/
@@ -25,13 +26,19 @@ class JsonServiceController extends Controller {
 	public function handleRequest(SS_HTTPRequest $request) {
 		try {
 			if (!Member::currentUserID()) {
-				$token = $request->getVar('token');
+				$token = $request->requestVar('token');
 				if (!$token) {
 					throw new WebServiceException(403, "Missing token parameter");
 				}
 				$user = singleton('TokenAuthenticator')->authenticate($token);
 				if (!$user) {
 					throw new WebServiceException(403, "Invalid user token");
+				}
+			} else {
+				// we check the SecurityID parameter
+				$securityID = $request->requestVar('SecurityID');
+				if ($securityID != SecurityToken::inst()->getValue()) {
+					throw new WebServiceException(403, "Invalid security ID");
 				}
 			}
 			return parent::handleRequest($request);
@@ -88,9 +95,9 @@ class JsonServiceController extends Controller {
 					
 					if (is_object($return)) {
 						$cls = get_class($return);
-					
+
 						if (isset($this->converters[$cls])) {
-							return $this->converters->convert($retur);
+							return $this->converters[$cls]->convert($return);
 						}
 
 						// otherwise, check the hierarchy 
