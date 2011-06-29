@@ -16,7 +16,7 @@ class JsonServiceController extends Controller {
 	 * @var array
 	 */
 	protected $converters = array();
-	
+
 	public function init() {
 		parent::init();
 		$this->converters['DataObject'] = new DataObjectJsonConverter();
@@ -64,10 +64,15 @@ class JsonServiceController extends Controller {
 
 		$svc = singleton($service);
 
-		if ($svc && $svc instanceof JsonServiceable || method_exists($svc, 'webEnabledMethods')) {
+		if ($svc && ($svc instanceof JsonServiceable || method_exists($svc, 'webEnabledMethods'))) {
 			$allowedMethods = array();
 			if (method_exists($svc, 'webEnabledMethods')) {
 				$allowedMethods = $svc->webEnabledMethods();
+			}
+			
+			// if we have a list of methods, lets use those to restrict
+			if (count($allowedMethods) && !in_array($method, $allowedMethods)) {
+				throw new WebServiceException(403, "You do not have permission to $method");
 			}
 
 			$refObj = new ReflectionObject($svc);
