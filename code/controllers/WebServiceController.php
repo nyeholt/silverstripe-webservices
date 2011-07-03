@@ -23,7 +23,8 @@ class WebServiceController extends Controller {
 		parent::init();
 		$this->converters['json'] = array(
 			'DataObject' => new DataObjectJsonConverter(),
-			'DataObjectSet' => new DataObjectSetJsonConverter()
+			'DataObjectSet' => new DataObjectSetJsonConverter(),
+			'ScalarItem'	=> new ScalarJsonConverter(),
 		);
 		
 		if (strpos($this->request->getURL(), 'xmlservice') === 0) {
@@ -124,31 +125,26 @@ class WebServiceController extends Controller {
 				
 				$return = $refMeth->invokeArgs($svc, $params);
 				
-				if (is_null($return)) {
-					return '{}';
+				if (is_object($return)) {
+					$cls = get_class($return);
 				} else {
-					if (is_object($return)) {
-						$cls = get_class($return);
+					$cls = 'ScalarItem';
+				}
 
+				if (isset($this->converters[$this->format][$cls])) {
+					return $this->converters[$this->format][$cls]->convert($return);
+				}
+
+				// otherwise, check the hierarchy if the class actually exists
+				if (class_exists($cls)) {
+					$hierarchy = array_reverse(array_keys(ClassInfo::ancestry($cls)));
+					foreach ($hierarchy as $cls) {
 						if (isset($this->converters[$this->format][$cls])) {
 							return $this->converters[$this->format][$cls]->convert($return);
 						}
-
-						// otherwise, check the hierarchy 
-						$hierarchy = array_reverse(array_keys(ClassInfo::ancestry($cls)));
-
-						foreach ($hierarchy as $cls) {
-							if (isset($this->converters[$this->format][$cls])) {
-								return $this->converters[$this->format][$cls]->convert($return);
-							}
-						}
 					}
-
-					if (is_scalar($return)) {
-						$return = array('return' => $return);
-					}
-					return Convert::raw2json($return);
 				}
+				return $this->converters[$this->format]['ScalarItem']->convert($return);
 			}
 		}
 	}
@@ -168,5 +164,19 @@ class WebServiceException extends Exception {
 	public function __construct($status=403, $message='', $code=null, $previous=null) {
 		$this->status = $status;
 		parent::__construct($message, $code, $previous);
+	}
+}
+
+class ScalarJsonConverter {
+	public function convert($value) {
+		$return = array('return' => $value);
+		return Convert::raw2json($return);
+	}
+}
+
+class ScalarXmlConverter {
+	public function convert($value) {
+		$return = '<return>'.Convert::raw2xml($value).'</return>';
+		return $return;
 	}
 }
