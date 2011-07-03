@@ -8,7 +8,7 @@
  * @author marcus@silverstripe.com.au
  * @license BSD License http://silverstripe.org/bsd-license/
  */
-class JsonServiceController extends Controller {
+class WebServiceController extends Controller {
 	
 	/**
 	 * List of object -> json converter classes
@@ -16,11 +16,19 @@ class JsonServiceController extends Controller {
 	 * @var array
 	 */
 	protected $converters = array();
+	
+	protected $format = 'json';
 
 	public function init() {
 		parent::init();
-		$this->converters['DataObject'] = new DataObjectJsonConverter();
-		$this->converters['DataObjectSet'] = new DataObjectSetJsonConverter();
+		$this->converters['json'] = array(
+			'DataObject' => new DataObjectJsonConverter(),
+			'DataObjectSet' => new DataObjectSetJsonConverter()
+		);
+		
+		if (strpos($this->request->getURL(), 'xmlservice') === 0) {
+			$this->format = 'xml';
+		}
 	}
 
 	public function handleRequest(SS_HTTPRequest $request) {
@@ -84,7 +92,28 @@ class JsonServiceController extends Controller {
 				$allArgs = $this->request->requestVars();
 				foreach ($refParams as $refParm) {
 					/* @var $refParm ReflectionParameter */
-					if (isset($allArgs[$refParm->getName()])) {
+					$paramClass = $refParm->getClass();
+					// if we're after a dataobject, we'll try and find one using
+					// this name with ID and Type parameters
+					if ($paramClass && ($paramClass->getName() == 'DataObject' || $paramClass->isSubclassOf('DataObject'))) {
+						$idArg = $refParm->getName().'ID';
+						$typeArg = $refParm->getName().'Type';
+						
+						if (isset($allArgs[$idArg]) && isset($allArgs[$typeArg]) && class_exists($allArgs[$typeArg])) {
+							$object = null;
+							if (class_exists('DataService')) {
+								$object = singleton('DataService')->byId($allArgs[$typeArg], $allArgs[$idArg]);
+							} else {
+								$object = DataObject::get_by_id($allArgs[$typeArg], $allArgs[$idArg]);
+								if (!$object->canView()) {
+									$object = null;
+								}
+							}
+							if ($object) {
+								$params[$refParm->getName()] = $object;
+							}
+						}
+					} else if (isset($allArgs[$refParm->getName()])) {
 						$params[$refParm->getName()] = $allArgs[$refParm->getName()];
 					} else if ($refParm->isOptional()) {
 						$params[$refParm->getName()] = $refParm->getDefaultValue();
@@ -92,27 +121,31 @@ class JsonServiceController extends Controller {
 						throw new WebServiceException(404, "Service method $method expects parameter " . $refParm->getName());
 					}
 				}
+				
 				$return = $refMeth->invokeArgs($svc, $params);
 				
 				if (is_null($return)) {
 					return '{}';
 				} else {
-					
 					if (is_object($return)) {
 						$cls = get_class($return);
 
-						if (isset($this->converters[$cls])) {
-							return $this->converters[$cls]->convert($return);
+						if (isset($this->converters[$this->format][$cls])) {
+							return $this->converters[$this->format][$cls]->convert($return);
 						}
 
 						// otherwise, check the hierarchy 
 						$hierarchy = array_reverse(array_keys(ClassInfo::ancestry($cls)));
 
 						foreach ($hierarchy as $cls) {
-							if (isset($this->converters[$cls])) {
-								return $this->converters[$cls]->convert($return);
+							if (isset($this->converters[$this->format][$cls])) {
+								return $this->converters[$this->format][$cls]->convert($return);
 							}
 						}
+					}
+
+					if (is_scalar($return)) {
+						$return = array('return' => $return);
 					}
 					return Convert::raw2json($return);
 				}
