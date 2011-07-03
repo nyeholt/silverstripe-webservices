@@ -27,6 +27,10 @@ class WebServiceController extends Controller {
 			'ScalarItem'	=> new ScalarJsonConverter(),
 		);
 		
+		$this->converters['xml'] = array(
+			'ScalarItem'	=> new ScalarXmlConverter(),
+		);
+		
 		if (strpos($this->request->getURL(), 'xmlservice') === 0) {
 			$this->format = 'xml';
 		}
@@ -50,7 +54,11 @@ class WebServiceController extends Controller {
 					throw new WebServiceException(403, "Invalid security ID");
 				}
 			}
-			return parent::handleRequest($request);
+			$response = parent::handleRequest($request);
+			if ($response instanceof SS_HTTPResponse) {
+				$response->addHeader('Content-Type', 'application/'.$this->format);
+			}
+			return $response;
 		} catch (WebServiceException $exception) {
 			$this->response = new SS_HTTPResponse();
 			$this->response->setStatusCode($exception->status);
@@ -64,6 +72,7 @@ class WebServiceController extends Controller {
 			$this->response->setBody($this->ajaxResponse($exception->getMessage(), 500));
 		}
 
+		
 		return $this->response;
 	}
 
@@ -78,7 +87,7 @@ class WebServiceController extends Controller {
 			if (method_exists($svc, 'webEnabledMethods')) {
 				$allowedMethods = $svc->webEnabledMethods();
 			}
-			
+
 			// if we have a list of methods, lets use those to restrict
 			if (count($allowedMethods) && !in_array($method, $allowedMethods)) {
 				throw new WebServiceException(403, "You do not have permission to $method");
