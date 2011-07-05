@@ -80,6 +80,8 @@ class WebServiceController extends Controller {
 		$service = ucfirst($this->request->param('Service')) . 'Service';
 		$method = $this->request->param('Method');
 
+		$requestType = isset($_POST) && count($_POST) ? 'POST' : 'GET';
+		
 		$svc = singleton($service);
 
 		if ($svc && ($svc instanceof JsonServiceable || method_exists($svc, 'webEnabledMethods'))) {
@@ -89,10 +91,22 @@ class WebServiceController extends Controller {
 			}
 
 			// if we have a list of methods, lets use those to restrict
-			if (count($allowedMethods) && !in_array($method, $allowedMethods)) {
-				throw new WebServiceException(403, "You do not have permission to $method");
-			}
+			if (count($allowedMethods)) {
+				if (!isset($allowedMethods[$method])) {
+					throw new WebServiceException(403, "You do not have permission to $method");
+				}
 
+				// otherwise it might be the wrong request type
+				if ($requestType != $allowedMethods[$method]) {
+					throw new WebServiceException(405, "$method does not support $requestType");
+				}
+			} else {
+				// we only allow 'read only' requests so we wrap everything
+				// in a readonly transaction so that any database request
+				// disallows write() calls
+				// @TODO
+			}
+			
 			$refObj = new ReflectionObject($svc);
 			$refMeth = $refObj->getMethod($method);
 			/* @var $refMeth ReflectionMethod */
@@ -166,7 +180,6 @@ class WebServiceController extends Controller {
 	}
 }
 
-
 class WebServiceException extends Exception {
 	public $status;
 	
@@ -178,14 +191,14 @@ class WebServiceException extends Exception {
 
 class ScalarJsonConverter {
 	public function convert($value) {
-		$return = array('return' => $value);
+		$return = array('response' => $value);
 		return Convert::raw2json($return);
 	}
 }
 
 class ScalarXmlConverter {
 	public function convert($value) {
-		$return = '<return>'.Convert::raw2xml($value).'</return>';
+		$return = '<response>'.Convert::raw2xml($value).'</response>';
 		return $return;
 	}
 }
