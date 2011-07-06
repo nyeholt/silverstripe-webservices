@@ -22,15 +22,18 @@ class WebServiceController extends Controller {
 	public function init() {
 		parent::init();
 		$this->converters['json'] = array(
-			'DataObject' => new DataObjectJsonConverter(),
-			'DataObjectSet' => new DataObjectSetJsonConverter(),
-			'ScalarItem'	=> new ScalarJsonConverter(),
+			'DataObject'		=> new DataObjectJsonConverter(),
+			'DataObjectSet'		=> new DataObjectSetJsonConverter(),
+			'Array'				=> new ArrayJsonConverter(),
+			'ScalarItem'		=> new ScalarJsonConverter(),
+			'FinalConverter'	=> new FinalJsonConverter()
 		);
 		
 		$this->converters['xml'] = array(
-			'ScalarItem'	=> new ScalarXmlConverter(),
+			'ScalarItem'		=> new ScalarXmlConverter(),
+			'FinalConverter'	=> new FinalXmlConverter()
 		);
-		
+
 		if (strpos($this->request->getURL(), 'xmlservice') === 0) {
 			$this->format = 'xml';
 		}
@@ -148,28 +151,39 @@ class WebServiceController extends Controller {
 				
 				$return = $refMeth->invokeArgs($svc, $params);
 				
-				if (is_object($return)) {
-					$cls = get_class($return);
-				} else {
-					$cls = 'ScalarItem';
-				}
-
-				if (isset($this->converters[$this->format][$cls])) {
-					return $this->converters[$this->format][$cls]->convert($return);
-				}
-
-				// otherwise, check the hierarchy if the class actually exists
-				if (class_exists($cls)) {
-					$hierarchy = array_reverse(array_keys(ClassInfo::ancestry($cls)));
-					foreach ($hierarchy as $cls) {
-						if (isset($this->converters[$this->format][$cls])) {
-							return $this->converters[$this->format][$cls]->convert($return);
-						}
-					}
-				}
-				return $this->converters[$this->format]['ScalarItem']->convert($return);
+				$responseItem = $this->convertResponse($return);
+				return $this->converters[$this->format]['FinalConverter']->convert($responseItem);
 			}
 		}
+	}
+
+	/**
+	 * Converts the given object to something appropriate for a response
+	 */
+	public function convertResponse($return) {
+		if (is_object($return)) {
+			$cls = get_class($return);
+		} else if (is_array($return)) {
+			$cls = 'Array';
+		} else {
+			$cls = 'ScalarItem';
+		}
+
+		if (isset($this->converters[$this->format][$cls])) {
+			return $this->converters[$this->format][$cls]->convert($return, $this);
+		}
+
+		// otherwise, check the hierarchy if the class actually exists
+		if (class_exists($cls)) {
+			$hierarchy = array_reverse(array_keys(ClassInfo::ancestry($cls)));
+			foreach ($hierarchy as $cls) {
+				if (isset($this->converters[$this->format][$cls])) {
+					return $this->converters[$this->format][$cls]->convert($return, $this);
+				}
+			}
+		}
+		
+		return $return;
 	}
 	
 	protected function ajaxResponse($message, $status) {
@@ -178,6 +192,7 @@ class WebServiceController extends Controller {
 			'status' => $status,
 		));
 	}
+	
 }
 
 class WebServiceException extends Exception {
@@ -191,12 +206,24 @@ class WebServiceException extends Exception {
 
 class ScalarJsonConverter {
 	public function convert($value) {
-		$return = array('response' => $value);
-		return Convert::raw2json($return);
+		return Convert::raw2json($value);
 	}
 }
 
 class ScalarXmlConverter {
+	public function convert($value) {
+		return $value;
+	}
+}
+
+class FinalJsonConverter {
+	public function convert($value) {
+		$return = '{"response": '.$value . '}';
+		return $return;
+	}
+}
+
+class FinalXmlConverter {
 	public function convert($value) {
 		$return = '<response>'.Convert::raw2xml($value).'</response>';
 		return $return;
