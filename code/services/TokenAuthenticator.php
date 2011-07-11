@@ -11,10 +11,10 @@ class TokenAuthenticator {
 	public function __construct () {}
 	
 	/**
-	 * 
 	 * @param String $token
 	 */
 	public function authenticate($token) {
+		// done directly against the DB because we don't have a user context yet
 		$user = DataObject::get_one('Member', '"Token" = \''.Convert::raw2sql($token).'\'');
 		if ($user && $user->exists()) {
 			$user->login(false);

@@ -15,4 +15,10 @@ class TokenAccessible extends DataObjectDecorator {
 			)
 		);
 	}
+	
+	public function onBeforeWrite() {
+		if (!$this->owner->Token) {
+			$this->owner->Token = md5(md5(uniqid() . mt_rand(0, 9000000)) . md5(microtime(true) . uniqid() . mt_rand(0, 9000000)));
+		}
+	}
 }
