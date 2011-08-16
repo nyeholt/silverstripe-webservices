@@ -18,6 +18,14 @@ class WebServiceController extends Controller {
 	protected $converters = array();
 	
 	protected $format = 'json';
+	
+	/**
+	 * Whether allowing access to the API by passing a security ID after
+	 * logging in. 
+	 *
+	 * @var boolean
+	 */
+	public static $allow_security_id = true;
 
 	public function init() {
 		parent::init();
@@ -50,12 +58,15 @@ class WebServiceController extends Controller {
 				if (!$user) {
 					throw new WebServiceException(403, "Invalid user token");
 				}
-			} else {
+			} else if (self::$allow_security_id) {
 				// we check the SecurityID parameter
-				$securityID = $request->requestVar('SecurityID');
+				$secParam = SecurityToken::inst()->getName();
+				$securityID = $request->requestVar($secParam);
 				if ($securityID != SecurityToken::inst()->getValue()) {
 					throw new WebServiceException(403, "Invalid security ID");
 				}
+			} else {
+				throw new WebServiceException(403, "Invalid request");
 			}
 			$response = parent::handleRequest($request);
 			if ($response instanceof SS_HTTPResponse) {
@@ -79,6 +90,12 @@ class WebServiceController extends Controller {
 		return $this->response;
 	}
 
+	/**
+	 * Calls to webservices are routed through here and converted
+	 * from url params to method calls. 
+	 *
+	 * @return mixed
+	 */
 	public function index() {
 		$service = ucfirst($this->request->param('Service')) . 'Service';
 		$method = $this->request->param('Method');
