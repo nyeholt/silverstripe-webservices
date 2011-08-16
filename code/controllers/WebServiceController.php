@@ -28,7 +28,7 @@ class WebServiceController extends Controller {
 			'ScalarItem'		=> new ScalarJsonConverter(),
 			'FinalConverter'	=> new FinalJsonConverter()
 		);
-		
+
 		$this->converters['xml'] = array(
 			'ScalarItem'		=> new ScalarXmlConverter(),
 			'FinalConverter'	=> new FinalXmlConverter()
@@ -84,10 +84,10 @@ class WebServiceController extends Controller {
 		$method = $this->request->param('Method');
 
 		$requestType = isset($_POST) && count($_POST) ? 'POST' : 'GET';
-		
+
 		$svc = singleton($service);
 
-		if ($svc && ($svc instanceof JsonServiceable || method_exists($svc, 'webEnabledMethods'))) {
+		if ($svc && ($svc instanceof WebServiceable || method_exists($svc, 'webEnabledMethods'))) {
 			$allowedMethods = array();
 			if (method_exists($svc, 'webEnabledMethods')) {
 				$allowedMethods = $svc->webEnabledMethods();
@@ -182,7 +182,7 @@ class WebServiceController extends Controller {
 				}
 			}
 		}
-		
+
 		return $return;
 	}
 	
