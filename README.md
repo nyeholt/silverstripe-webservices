@@ -21,7 +21,8 @@ token access.
   code and directly via the web
 * Access your service via the appropriate URL, eg
 
-	jsonservice/SampleService/sampleMethod?param=something&SecurityID=what_ever_goes_here
+	http://yourUrl/jsonservice/DummyWeb/myMethod?param=stuff&SecurityID=security_id_here
+
 
 * Use the response
 
@@ -39,7 +40,9 @@ URLs are decomposed as follows
 	(type)/(service)/(method)?(paramName)=(value)&token=(token)[&SecurityID=(securityID)]
 
 * type: either jsonservice or webservice, indicates the desired output format
-* service: the name of a service class (see below)
+* service: the name of a service class (see below). It expects the service to
+  end in the string 'Service' - in fact, that will be automatically appended to
+  the name passed through here. 
 * method: the name of the method to call on the service
 * paramName/value: key/value pairs representing parameters. The paramName MUST
   match the name of the parameter in the method declaration. 
