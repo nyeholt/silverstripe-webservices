@@ -12,7 +12,11 @@ class DataObjectSetJsonConverter {
 		$ret = new stdClass();
 		$ret->items = array();
 		foreach ($set as $item) {
-			$ret->items[] = $item->toMap();
+			if (method_exists($item, 'toMap')) {
+				$ret->items[] = $item->toMap();
+			} else {
+				$ret->items[] = $item;
+			}
 		}
 
 		return Convert::raw2json($ret);
