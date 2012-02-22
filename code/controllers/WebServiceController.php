@@ -34,6 +34,7 @@ class WebServiceController extends Controller {
 			'DataObjectSet'		=> new DataObjectSetJsonConverter(),
 			'Array'				=> new ArrayJsonConverter(),
 			'ScalarItem'		=> new ScalarJsonConverter(),
+			'stdClass'			=> new ScalarJsonConverter(),
 			'FinalConverter'	=> new FinalJsonConverter()
 		);
 
