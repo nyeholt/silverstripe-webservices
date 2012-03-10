@@ -1,3 +1,8 @@
+2012-03-10 v1.1.0
+-----------------
+
+* Allowed non-logged in access to methods if explicitly declared public methods
+
 2011-08-16 v1.0.0
 -----------------
 

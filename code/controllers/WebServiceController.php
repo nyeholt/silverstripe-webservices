@@ -11,6 +11,15 @@
 class WebServiceController extends Controller {
 	
 	/**
+	 * Disable all public requests by default; If this is 
+	 * set to true, services must still explicitly allow public access
+	 * on those services that can be called by non-auth'd users. 
+	 *
+	 * @var boolean
+	 */
+	private static $allow_public_access = false;
+	
+	/**
 	 * List of object -> json converter classes
 	 *
 	 * @var array
@@ -50,11 +59,12 @@ class WebServiceController extends Controller {
 
 	public function handleRequest(SS_HTTPRequest $request) {
 		try {
-			if (!Member::currentUserID()) {
+			if (!Member::currentUserID() && !self::$allow_public_access) {
 				$token = $request->requestVar('token');
 				if (!$token) {
 					throw new WebServiceException(403, "Missing token parameter");
 				}
+				
 				$user = singleton('TokenAuthenticator')->authenticate($token);
 				if (!$user) {
 					throw new WebServiceException(403, "Invalid user token");
@@ -66,9 +76,10 @@ class WebServiceController extends Controller {
 				if ($securityID != SecurityToken::inst()->getValue()) {
 					throw new WebServiceException(403, "Invalid security ID");
 				}
-			} else {
+			} else if (!self::$allow_public_access) {
 				throw new WebServiceException(403, "Invalid request");
 			}
+
 			$response = parent::handleRequest($request);
 			if ($response instanceof SS_HTTPResponse) {
 				$response->addHeader('Content-Type', 'application/'.$this->format);
@@ -87,7 +98,6 @@ class WebServiceController extends Controller {
 			$this->response->setBody($this->ajaxResponse($exception->getMessage(), 500));
 		}
 
-		
 		return $this->response;
 	}
 
@@ -126,6 +136,18 @@ class WebServiceController extends Controller {
 				// in a readonly transaction so that any database request
 				// disallows write() calls
 				// @TODO
+			}
+			
+			if (!Member::currentUserID()) {
+				// require service to explicitly state that the method is allowed
+				if (method_exists($svc, 'publicWebMethods')) {
+					$publicMethods = $svc->publicWebMethods();
+					if (!isset($publicMethods[$method])) {
+						throw new WebServiceException(403, "Method $method not allowed");
+					}
+				} else {
+					throw new WebServiceException(403, "Method $method not allowed");
+				}
 			}
 			
 			$refObj = new ReflectionObject($svc);
@@ -202,6 +224,15 @@ class WebServiceController extends Controller {
 		}
 
 		return $return;
+	}
+	
+	/**
+	 * Indicate whether public users can access web services in general
+	 *
+	 * @param boolean $value 
+	 */
+	public static function set_allow_public($value) {
+		self::$allow_public_access = $value;
 	}
 	
 	protected function ajaxResponse($message, $status) {
