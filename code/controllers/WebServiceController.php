@@ -59,12 +59,11 @@ class WebServiceController extends Controller {
 
 	public function handleRequest(SS_HTTPRequest $request) {
 		try {
-			if (!Member::currentUserID() && !self::$allow_public_access) {
+			if ((!Member::currentUserID() && !self::$allow_public_access) || $request->requestVar('token')) {
 				$token = $request->requestVar('token');
 				if (!$token) {
 					throw new WebServiceException(403, "Missing token parameter");
 				}
-				
 				$user = singleton('TokenAuthenticator')->authenticate($token);
 				if (!$user) {
 					throw new WebServiceException(403, "Invalid user token");
@@ -79,7 +78,6 @@ class WebServiceController extends Controller {
 			} else if (!self::$allow_public_access) {
 				throw new WebServiceException(403, "Invalid request");
 			}
-
 			$response = parent::handleRequest($request);
 			if ($response instanceof SS_HTTPResponse) {
 				$response->addHeader('Content-Type', 'application/'.$this->format);
@@ -98,6 +96,7 @@ class WebServiceController extends Controller {
 			$this->response->setBody($this->ajaxResponse($exception->getMessage(), 500));
 		}
 
+		
 		return $this->response;
 	}
 
