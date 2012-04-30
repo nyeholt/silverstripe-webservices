@@ -59,6 +59,7 @@ class WebServiceController extends Controller {
 
 	public function handleRequest(SS_HTTPRequest $request) {
 		try {
+			$this->pushCurrent();
 			if ((!Member::currentUserID() && !self::$allow_public_access) || $request->requestVar('token')) {
 				$token = $request->requestVar('token');
 				if (!$token) {
@@ -79,6 +80,11 @@ class WebServiceController extends Controller {
 				throw new WebServiceException(403, "Invalid request");
 			}
 			$response = parent::handleRequest($request);
+			
+			if (self::has_curr()) {
+				$this->popCurrent();
+			}
+			
 			if ($response instanceof SS_HTTPResponse) {
 				$response->addHeader('Content-Type', 'application/'.$this->format);
 			}
@@ -142,13 +148,13 @@ class WebServiceController extends Controller {
 				if (method_exists($svc, 'publicWebMethods')) {
 					$publicMethods = $svc->publicWebMethods();
 					if (!isset($publicMethods[$method])) {
-						throw new WebServiceException(403, "Method $method not allowed");
+						throw new WebServiceException(403, "Public method $method not allowed");
 					}
 				} else {
-					throw new WebServiceException(403, "Method $method not allowed");
+					throw new WebServiceException(403, "Method $method not allowed; no public methods defined");
 				}
 			}
-			
+
 			$refObj = new ReflectionObject($svc);
 			$refMeth = $refObj->getMethod($method);
 			/* @var $refMeth ReflectionMethod */
