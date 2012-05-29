@@ -97,11 +97,16 @@ class WebServiceController extends Controller {
 			$this->response = $e->getResponse();
 			$this->response->setBody($this->ajaxResponse($e->getMessage(), $e->getCode()));
 		} catch (Exception $exception) {
-			$this->response = new SS_HTTPResponse();
-			$this->response->setStatusCode(500);
-			$this->response->setBody($this->ajaxResponse($exception->getMessage(), 500));
-		}
+			$code = 500;
+			// check type explicitly in case the Restricted Objects module isn't installed
+			if (class_exists('PermissionDeniedException') && $exception instanceof PermissionDeniedException) {
+				$code = 403;
+			}
 
+			$this->response = new SS_HTTPResponse();
+			$this->response->setStatusCode($code);
+			$this->response->setBody($this->ajaxResponse($exception->getMessage(), $code));
+		}
 		
 		return $this->response;
 	}
