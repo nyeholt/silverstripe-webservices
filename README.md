@@ -1,4 +1,3 @@
-
 # Web Services module
 
 A module for exposing defined business logic via URLs, in web consumable
@@ -37,7 +36,7 @@ is encapsulated in a layer away from controllers (an all too common problem).
 
 URLs are decomposed as follows
 
-	(type)/(service)/(method)?(paramName)=(value)&token=(token)[&SecurityID=(securityID)]
+    (type)/(service)/(method)?(paramName)=(value)&token=(token)[&SecurityID=(securityID)]
 
 * type: either jsonservice or webservice, indicates the desired output format
 * service: the name of a service class (see below). It expects the service to
@@ -49,7 +48,14 @@ URLs are decomposed as follows
   * See the note below for information on how to pass DataObjects
 * token | SecurityID: Each request must be verified; this is either through
   the use of a token parameter (which matches up with a user's API token) OR
-  by passing the security ID for a user who has already logged in. 
+  by passing the security ID for a user who has already logged in. The token 
+  can be found by looking on the user's details tab in the CMS
+
+Included is an example service for creating events in a calendar using the
+event_calendar module. You can create events for this using the following
+curl statement
+
+    curl -X POST -d "token={your token here}&parentCalendar={ID of calendar}&title=My new event&content=This is an event on a day here and now&startDate=2012-04-21" http://{your site url}/jsonservice/calendarweb/createEvent
 
 ### Passing DataObjects
 
