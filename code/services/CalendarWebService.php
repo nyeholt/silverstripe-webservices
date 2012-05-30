@@ -36,6 +36,10 @@ class CalendarWebService {
 		if (!$parentCalendar || !$parentCalendar->exists()) {
 			throw new Exception("Could not find parent calendar");
 		}
+		
+		if (!$parentCalendar->canEdit()) {
+			throw new WebServiceException(403, "Access denied to that calendar");
+		}
 
 		if ($canRegister && !class_exists('RegisterableEvent')) {
 			throw new Exception("Event registration not supported");
