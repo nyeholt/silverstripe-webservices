@@ -35,6 +35,14 @@ class WebServiceController extends Controller {
 	 * @var boolean
 	 */
 	public static $allow_security_id = true;
+	
+	public static $dependencies = array(
+		'tokenAuthenticator'	=> '%$TokenAuthenticator',
+		'injector'				=> '%$Injector',
+	);
+	
+	public $tokenAuthenticator;
+	public $injector;
 
 	public function init() {
 		parent::init();
@@ -65,7 +73,7 @@ class WebServiceController extends Controller {
 				if (!$token) {
 					throw new WebServiceException(403, "Missing token parameter");
 				}
-				$user = singleton('TokenAuthenticator')->authenticate($token);
+				$user = $this->tokenAuthenticator->authenticate($token);
 				if (!$user) {
 					throw new WebServiceException(403, "Invalid user token");
 				}
@@ -118,7 +126,7 @@ class WebServiceController extends Controller {
 
 		$requestType = isset($_POST) && count($_POST) ? 'POST' : 'GET';
 
-		$svc = singleton($service);
+		$svc = $this->injector->get($service);
 
 		if ($svc && ($svc instanceof WebServiceable || method_exists($svc, 'webEnabledMethods'))) {
 			$allowedMethods = array();
@@ -174,7 +182,7 @@ class WebServiceController extends Controller {
 						if (isset($allArgs[$idArg]) && isset($allArgs[$typeArg]) && class_exists($allArgs[$typeArg])) {
 							$object = null;
 							if (class_exists('DataService')) {
-								$object = singleton('DataService')->byId($allArgs[$typeArg], $allArgs[$idArg]);
+								$object = $this->injector->DataService->byId($allArgs[$typeArg], $allArgs[$idArg]);
 							} else {
 								$object = DataObject::get_by_id($allArgs[$typeArg], $allArgs[$idArg]);
 								if (!$object->canView()) {
