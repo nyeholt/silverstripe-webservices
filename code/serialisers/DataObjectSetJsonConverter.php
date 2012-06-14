@@ -8,7 +8,7 @@
  */
 class DataObjectSetJsonConverter {
 	
-	public function convert(DataObjectSet $set) {
+	public function convert($set) {
 		$ret = new stdClass();
 		$ret->items = array();
 		foreach ($set as $item) {

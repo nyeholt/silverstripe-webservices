@@ -49,6 +49,7 @@ class WebServiceController extends Controller {
 		$this->converters['json'] = array(
 			'DataObject'		=> new DataObjectJsonConverter(),
 			'DataObjectSet'		=> new DataObjectSetJsonConverter(),
+			'DataList'			=> new DataObjectSetJsonConverter(),
 			'Array'				=> new ArrayJsonConverter(),
 			'ScalarItem'		=> new ScalarJsonConverter(),
 			'stdClass'			=> new ScalarJsonConverter(),
