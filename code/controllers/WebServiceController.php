@@ -66,7 +66,7 @@ class WebServiceController extends Controller {
 		}
 	}
 
-	public function handleRequest(SS_HTTPRequest $request) {
+	public function handleRequest(SS_HTTPRequest $request, DataModel $model) {
 		try {
 			$this->pushCurrent();
 			if ((!Member::currentUserID() && !self::$allow_public_access) || $request->requestVar('token')) {
@@ -88,7 +88,7 @@ class WebServiceController extends Controller {
 			} else if (!self::$allow_public_access) {
 				throw new WebServiceException(403, "Invalid request");
 			}
-			$response = parent::handleRequest($request);
+			$response = parent::handleRequest($request, $model);
 			
 			if (self::has_curr()) {
 				$this->popCurrent();

@@ -12,7 +12,9 @@ class DataObjectSetJsonConverter {
 		$ret = new stdClass();
 		$ret->items = array();
 		foreach ($set as $item) {
-			if (method_exists($item, 'toMap')) {
+			if ($item instanceof Object && $item->hasMethod('toFilteredMap')) {
+				$ret->items[] = $item->toFilteredMap();
+			} else if (method_exists($item, 'toMap')) {
 				$ret->items[] = $item->toMap();
 			} else {
 				$ret->items[] = $item;

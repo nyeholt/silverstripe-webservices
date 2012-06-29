@@ -9,6 +9,9 @@
 class DataObjectJsonConverter {
 	
 	public function convert(DataObject $object) {
+		if ($object->hasMethod('toFilteredMap')) {
+			return Convert::raw2json($object->toFilteredMap());
+		} 
 		return Convert::raw2json($object->toMap());
 	}
 }

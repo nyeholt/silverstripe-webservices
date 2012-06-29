@@ -24,7 +24,6 @@ class DummyWebService implements WebServiceable {
 	}
 
 	public function myMethod($param) {
-		
 		return array(
 			'SomeParam'			=> 'Goes here',
 			'Boolean'			=> true,
