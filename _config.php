@@ -1,7 +1,7 @@
 <?php
 
 
-Director::addRules(20, array(
+Director::addRules(100, array(
 	'jsonservice/$Service/$Method'			=> 'WebServiceController',
 	'xmlservice/$Service/$Method'			=> 'WebServiceController',
 ));
