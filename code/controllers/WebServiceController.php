@@ -142,14 +142,7 @@ class WebServiceController extends Controller {
 
 			// if we have a list of methods, lets use those to restrict
 			if (count($allowedMethods)) {
-				if (!isset($allowedMethods[$method])) {
-					throw new WebServiceException(403, "You do not have permission to $method");
-				}
-
-				// otherwise it might be the wrong request type
-				if ($requestType != $allowedMethods[$method]) {
-					throw new WebServiceException(405, "$method does not support $requestType");
-				}
+				$this->checkMethods($method, $allowedMethods, $requestType);
 			} else {
 				// we only allow 'read only' requests so we wrap everything
 				// in a readonly transaction so that any database request
@@ -213,6 +206,35 @@ class WebServiceController extends Controller {
 				$responseItem = $this->convertResponse($return);
 				return $this->converters[$this->format]['FinalConverter']->convert($responseItem);
 			}
+		}
+	}
+	
+	/**
+	 * Check the allowed methods for access rights
+	 * 
+	 * @param array $allowedMethods
+	 * @throws WebServiceException 
+	 */
+	protected function checkMethods($method, $allowedMethods, $requestType) {
+		if (!isset($allowedMethods[$method])) {
+			throw new WebServiceException(403, "You do not have permission to $method");
+		}
+
+		$info = $allowedMethods[$method];
+		$allowedType = $info;
+		if (is_array($info)) {
+			$allowedType = isset($info['type']) ? $info['type'] : '';
+			
+			if (isset($info['perm'])) {
+				if (!Permission::check($info['perm'])) {
+					throw new WebServiceException(403, "You do not have permission to $method");
+				}
+			}
+		}
+		
+		// otherwise it might be the wrong request type
+		if ($requestType != $allowedType) {
+			throw new WebServiceException(405, "$method does not support $requestType");
 		}
 	}
 
