@@ -8,6 +8,9 @@ A module for exposing defined business logic via URLs, in web consumable
 formats, and for providing access to consumers of these webservices via 
 token access. 
 
+These are NOT strictly speaking REST services, in that a single URL isn't
+meant to be accessible via GET and POST; it is RPC over HTTP.
+
 ## Maintainer Contacts
 
 *  Marcus Nyeholt <marcus@silverstripe.com.au>

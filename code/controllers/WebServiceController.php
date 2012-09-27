@@ -69,8 +69,8 @@ class WebServiceController extends Controller {
 	public function handleRequest(SS_HTTPRequest $request, DataModel $model) {
 		try {
 			$this->pushCurrent();
-			if ((!Member::currentUserID() && !self::$allow_public_access) || $request->requestVar('token')) {
-				$token = $request->requestVar('token');
+			$token = $this->getToken($request);
+			if ((!Member::currentUserID() && !self::$allow_public_access) || $token) {
 				if (!$token) {
 					throw new WebServiceException(403, "Missing token parameter");
 				}
@@ -119,19 +119,30 @@ class WebServiceController extends Controller {
 		
 		return $this->response;
 	}
+	
+	protected function getToken(SS_HTTPRequest $request) {
+		$token = $request->requestVar('token');
+		if (!$token) {
+			$token = $request->getHeader('X-Auth-Token');
+		}
+		
+		return $token;
+	}
 
 	/**
 	 * Calls to webservices are routed through here and converted
 	 * from url params to method calls. 
-	 *
+	 * 
 	 * @return mixed
 	 */
 	public function index() {
 		$service = ucfirst($this->request->param('Service')) . 'Service';
 		$method = $this->request->param('Method');
 
-		$requestType = isset($_POST) && count($_POST) ? 'POST' : 'GET';
-
+		$body = $this->request->getBody();
+		
+		$requestType = strlen($body) > 0 ? 'POST' : 'GET';
+		
 		$svc = $this->injector->get($service);
 
 		if ($svc && ($svc instanceof WebServiceable || method_exists($svc, 'webEnabledMethods'))) {
@@ -166,9 +177,20 @@ class WebServiceController extends Controller {
 			$refMeth = $refObj->getMethod($method);
 			/* @var $refMeth ReflectionMethod */
 			if ($refMeth) {
+				$allArgs = $this->request->requestVars();
+				unset($allArgs['url']);
+				
+				if (strlen($body) && !count($allArgs)) {
+					// decode the body to a params array
+					$bodyParams = Convert::json2array($body);
+					if (isset($bodyParams['params'])) {
+						$allArgs = $bodyParams['params'];
+					}
+				} 
+
 				$refParams = $refMeth->getParameters();
 				$params = array();
-				$allArgs = $this->request->requestVars();
+				
 				foreach ($refParams as $refParm) {
 					/* @var $refParm ReflectionParameter */
 					$paramClass = $refParm->getClass();

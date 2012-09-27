@@ -1,3 +1,12 @@
+
+2012-09-26 v2.0.1
+-----------------
+
+* Auth token can now be provided via X-Auth-Token instead of a URL param
+* POST methods can be called by passing in a JSON encoded POST body instead
+  of passing urlencoded params
+
+
 2012-09-21 v2.0.0
 -----------------
 
