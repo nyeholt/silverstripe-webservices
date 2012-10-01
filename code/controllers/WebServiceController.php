@@ -185,8 +185,10 @@ class WebServiceController extends Controller {
 					$bodyParams = Convert::json2array($body);
 					if (isset($bodyParams['params'])) {
 						$allArgs = $bodyParams['params'];
+					} else {
+						$allArgs = $bodyParams;
 					}
-				} 
+				}
 
 				$refParams = $refMeth->getParameters();
 				$params = array();
@@ -219,7 +221,7 @@ class WebServiceController extends Controller {
 					} else if ($refParm->isOptional()) {
 						$params[$refParm->getName()] = $refParm->getDefaultValue();
 					} else {
-						throw new WebServiceException(404, "Service method $method expects parameter " . $refParm->getName());
+						throw new WebServiceException(500, "Service method $method expects parameter " . $refParm->getName());
 					}
 				}
 				
