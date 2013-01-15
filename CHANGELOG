@@ -1,3 +1,7 @@
+2013-01-15 v2.0.2
+-----------------
+
+* Make sure to check $_POST before assuming a $_GET request
 
 2012-09-26 v2.0.1
 -----------------
