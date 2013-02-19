@@ -65,6 +65,16 @@ class WebServiceController extends Controller {
 			$this->format = 'xml';
 		}
 	}
+	
+	
+	protected function getToken(SS_HTTPRequest $request) {
+		$token = $request->requestVar('token');
+		if (!$token) {
+			$token = $request->getHeader('X-Auth-Token');
+		}
+		
+		return $token;
+	}
 
 	public function handleRequest(SS_HTTPRequest $request, DataModel $model) {
 		try {
@@ -88,7 +98,31 @@ class WebServiceController extends Controller {
 			} else if (!self::$allow_public_access) {
 				throw new WebServiceException(403, "Invalid request");
 			}
-			$response = parent::handleRequest($request, $model);
+			
+			
+			// borrowed from Controller
+			$this->urlParams = $request->allParams();
+			$this->request = $request;
+			$this->response = new SS_HTTPResponse();
+			$this->setDataModel($model);
+
+			$this->extend('onBeforeInit');
+
+			$this->baseInitCalled = false;	
+			$this->init();
+			if(!$this->baseInitCalled) {
+				user_error("init() method on class '$this->class' doesn't call Controller::init()."
+					. "Make sure that you have parent::init() included.", E_USER_WARNING);
+			}
+
+			$this->extend('onAfterInit');
+			
+			if($this->response->isFinished()) {
+				$this->popCurrent();
+				return $this->response;
+			}
+
+			$response = $this->handleService($request, $model);
 			
 			if (self::has_curr()) {
 				$this->popCurrent();
@@ -97,6 +131,8 @@ class WebServiceController extends Controller {
 			if ($response instanceof SS_HTTPResponse) {
 				$response->addHeader('Content-Type', 'application/'.$this->format);
 			}
+			HTTP::add_cache_headers($this->response);
+			
 			return $response;
 		} catch (WebServiceException $exception) {
 			$this->response = new SS_HTTPResponse();
@@ -120,30 +156,23 @@ class WebServiceController extends Controller {
 		return $this->response;
 	}
 	
-	protected function getToken(SS_HTTPRequest $request) {
-		$token = $request->requestVar('token');
-		if (!$token) {
-			$token = $request->getHeader('X-Auth-Token');
-		}
-		
-		return $token;
-	}
-
 	/**
 	 * Calls to webservices are routed through here and converted
 	 * from url params to method calls. 
 	 * 
 	 * @return mixed
 	 */
-	public function index() {
+	public function handleService() {
 		$service = ucfirst($this->request->param('Service')) . 'Service';
 		$method = $this->request->param('Method');
 
 		$body = $this->request->getBody();
 
-		$requestType = strlen($body) > 0 ? 'POST' : (count($_POST) > 0 ? 'POST' : 'GET');
-		
+		$requestType = strlen($body) > 0 ? 'POST' : (count($this->request->postVars()) > 0 ? 'POST' : 'GET');
+
 		$svc = $this->injector->get($service);
+		
+		$response = '';
 
 		if ($svc && ($svc instanceof WebServiceable || method_exists($svc, 'webEnabledMethods'))) {
 			$allowedMethods = array();
@@ -160,7 +189,7 @@ class WebServiceController extends Controller {
 				// disallows write() calls
 				// @TODO
 			}
-			
+
 			if (!Member::currentUserID()) {
 				// require service to explicitly state that the method is allowed
 				if (method_exists($svc, 'publicWebMethods')) {
@@ -177,22 +206,12 @@ class WebServiceController extends Controller {
 			$refMeth = $refObj->getMethod($method);
 			/* @var $refMeth ReflectionMethod */
 			if ($refMeth) {
-				$allArgs = $this->request->requestVars();
-				unset($allArgs['url']);
 				
-				if (strlen($body) && !count($allArgs)) {
-					// decode the body to a params array
-					$bodyParams = Convert::json2array($body);
-					if (isset($bodyParams['params'])) {
-						$allArgs = $bodyParams['params'];
-					} else {
-						$allArgs = $bodyParams;
-					}
-				}
+				$allArgs = $this->getRequestArgs($requestType);
 
 				$refParams = $refMeth->getParameters();
 				$params = array();
-				
+
 				foreach ($refParams as $refParm) {
 					/* @var $refParm ReflectionParameter */
 					$paramClass = $refParm->getClass();
@@ -218,6 +237,9 @@ class WebServiceController extends Controller {
 						}
 					} else if (isset($allArgs[$refParm->getName()])) {
 						$params[$refParm->getName()] = $allArgs[$refParm->getName()];
+					} else if ($refParm->getName() == 'file' && $requestType == 'POST') {
+						// special case of a binary file upload
+						$params['file'] = $body;
 					} else if ($refParm->isOptional()) {
 						$params[$refParm->getName()] = $refParm->getDefaultValue();
 					} else {
@@ -228,9 +250,50 @@ class WebServiceController extends Controller {
 				$return = $refMeth->invokeArgs($svc, $params);
 				
 				$responseItem = $this->convertResponse($return);
-				return $this->converters[$this->format]['FinalConverter']->convert($responseItem);
+				
+				$response = $this->converters[$this->format]['FinalConverter']->convert($responseItem);
 			}
 		}
+		
+		$this->response->setBody($response);
+		return $this->response;
+	}
+	
+	protected function getRequestArgs($requestType = 'GET') {
+		if ($requestType == 'GET') {
+			$allArgs = $this->request->getVars();
+		} else {
+			$allArgs = $this->request->postVars();
+		}
+		
+		unset($allArgs['url']);
+
+		$contentType = $this->request->getHeader('Content-Type');
+
+		if ($contentType == 'application/json' && !count($allArgs) && strlen($this->request->getBody())) {
+			// decode the body to a params array
+			$bodyParams = Convert::json2array($this->request->getBody());
+			if (isset($bodyParams['params'])) {
+				$allArgs = $bodyParams['params'];
+			} else {
+				$allArgs = $bodyParams;
+			}
+		}
+
+		// see if there's any other URL bits to chew up
+		$remaining = $this->request->remaining();
+		$bits = explode('/', $remaining);
+		
+		for ($i = 0, $c = count($bits); $i < $c; ) {
+			$key = $bits[$i];
+			$val = isset($bits[$i + 1]) ? $bits[$i + 1] : null;
+			if ($val) {
+				$allArgs[$key] = $val;
+			}
+			$i += 2;
+		}
+		
+		return $allArgs;
 	}
 	
 	/**

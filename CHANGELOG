@@ -1,3 +1,10 @@
+
+2013-02-20 v2.1.0
+-----------------
+
+* Changes to support accept a post body as a file being uploaded
+* Accept key/value pairs in the URL as param/value arguments
+
 2013-01-15 v2.0.2
 -----------------
 
