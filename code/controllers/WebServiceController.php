@@ -93,7 +93,7 @@ class WebServiceController extends Controller {
 				$secParam = SecurityToken::inst()->getName();
 				$securityID = $request->requestVar($secParam);
 				if ($securityID != SecurityToken::inst()->getValue()) {
-					throw new WebServiceException(403, "Invalid security ID");
+					//throw new WebServiceException(403, "Invalid security ID");
 				}
 			} else if (!self::$allow_public_access) {
 				throw new WebServiceException(403, "Invalid request");
@@ -163,7 +163,7 @@ class WebServiceController extends Controller {
 	 * @return mixed
 	 */
 	public function handleService() {
-		$service = ucfirst($this->request->param('Service')) . 'Service';
+		$service = ucfirst($this->request->param('Service')) . 'WebService';
 		$method = $this->request->param('Method');
 
 		$body = $this->request->getBody();
