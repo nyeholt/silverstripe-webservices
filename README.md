@@ -98,6 +98,39 @@ it is not expected that a service carry the overhead of inheriting from
 'Object') so at the moment this is not overrideable using extensions. There will
 be ways to update this via extensions at a later date. 
 
+### Passing parameters via URL
+
+The webservice controller supports passing parameter/value pairs via the URL. 
+For example, the following request will have the parameters extracted
+
+/jsonservice/my/method/name/something/id/2
+
+Will call My::method(), passing parameters of 
+
+* name = something
+* id = 2
+
+### File uploads
+
+Files can be handled as either multipart uploads or by posting the raw file to 
+the webservice, typically in conjuction with the URL parameter referencing above. 
+
+To have the file accessible to your service method, you MUST have a method 
+parameter named "file" and a request type of POST; the raw post body of the 
+request will be placed in the "file" variable, and any parameters found on the
+URL also passed through. 
+
+eg in your service 
+
+    public function method($file, $name) {
+    
+    }
+    
+sending a post such as
+
+    curl -X POST -d @somefile.jpg http://site/jsonservice/my/method/name/myfile.jpg
+
+will send the body of somefile.jpg in the $file variable, and $name == 'myfile.jpg'
 
 ### Tokens
 
@@ -107,9 +140,15 @@ to access the API without being logged in first.
 
 Otherwise, if the user is logged in, they can pass through the security token
 as a parameter (appropriately named, by default SecurityID) with the request
-which will grant the user access. This can be disabled by setting
+which will grant the user access. This can be disabled by setting the 
+`allowPublicAccess` parameter for the WebserviceAuthenticator
 
-	WebServiceController::$allow_security_id = false;
+Injector:
+  WebserviceAuthenticator:
+    properties:
+      allowPublicAccess: 0
+
+	
 
 
 

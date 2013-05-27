@@ -10,14 +10,6 @@
  */
 class WebServiceController extends Controller {
 	
-	/**
-	 * Disable all public requests by default; If this is 
-	 * set to true, services must still explicitly allow public access
-	 * on those services that can be called by non-auth'd users. 
-	 *
-	 * @var boolean
-	 */
-	private static $allow_public_access = false;
 	
 	/**
 	 * List of object -> json converter classes
@@ -28,20 +20,19 @@ class WebServiceController extends Controller {
 	
 	protected $format = 'json';
 	
-	/**
-	 * Whether allowing access to the API by passing a security ID after
-	 * logging in. 
-	 *
-	 * @var boolean
-	 */
-	public static $allow_security_id = true;
-	
 	public static $dependencies = array(
-		'tokenAuthenticator'	=> '%$TokenAuthenticator',
-		'injector'				=> '%$Injector',
+		'webserviceAuthenticator'	=> '%$WebserviceAuthenticator',
+		'injector'					=> '%$Injector',
 	);
+
+	/**
+	 * @var WebserviceAuthenticator 
+	 */
+	public $webserviceAuthenticator;
 	
-	public $tokenAuthenticator;
+	/**
+	 * @var Injector
+	 */
 	public $injector;
 
 	public function init() {
@@ -50,6 +41,7 @@ class WebServiceController extends Controller {
 			'DataObject'		=> new DataObjectJsonConverter(),
 			'DataObjectSet'		=> new DataObjectSetJsonConverter(),
 			'DataList'			=> new DataObjectSetJsonConverter(),
+			'ArrayList'			=> new DataObjectSetJsonConverter(),
 			'Array'				=> new ArrayJsonConverter(),
 			'ScalarItem'		=> new ScalarJsonConverter(),
 			'stdClass'			=> new ScalarJsonConverter(),
@@ -65,40 +57,16 @@ class WebServiceController extends Controller {
 			$this->format = 'xml';
 		}
 	}
-	
-	
-	protected function getToken(SS_HTTPRequest $request) {
-		$token = $request->requestVar('token');
-		if (!$token) {
-			$token = $request->getHeader('X-Auth-Token');
-		}
-		
-		return $token;
-	}
 
 	public function handleRequest(SS_HTTPRequest $request, DataModel $model) {
 		try {
 			$this->pushCurrent();
-			$token = $this->getToken($request);
-			if ((!Member::currentUserID() && !self::$allow_public_access) || $token) {
-				if (!$token) {
-					throw new WebServiceException(403, "Missing token parameter");
-				}
-				$user = $this->tokenAuthenticator->authenticate($token);
-				if (!$user) {
-					throw new WebServiceException(403, "Invalid user token");
-				}
-			} else if (self::$allow_security_id) {
-				// we check the SecurityID parameter
-				$secParam = SecurityToken::inst()->getName();
-				$securityID = $request->requestVar($secParam);
-				if ($securityID != SecurityToken::inst()->getValue()) {
-					throw new WebServiceException(403, "Invalid security ID");
-				}
-			} else if (!self::$allow_public_access) {
-				throw new WebServiceException(403, "Invalid request");
-			}
 			
+			$auth = $this->webserviceAuthenticator->authenticate($request);
+			
+			if (!$auth) {
+				throw new WebServiceException(403, 'User not found');
+			}
 			
 			// borrowed from Controller
 			$this->urlParams = $request->allParams();
@@ -259,6 +227,12 @@ class WebServiceController extends Controller {
 		return $this->response;
 	}
 	
+	/**
+	 * Process a request URL + body to get all parameters for a request
+	 * 
+	 * @param string $requestType
+	 * @return array
+	 */
 	protected function getRequestArgs($requestType = 'GET') {
 		if ($requestType == 'GET') {
 			$allArgs = $this->request->getVars();
