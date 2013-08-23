@@ -9,8 +9,6 @@
  * @license BSD License http://silverstripe.org/bsd-license/
  */
 class WebServiceController extends Controller {
-	
-	
 	/**
 	 * List of object -> json converter classes
 	 *
@@ -135,7 +133,6 @@ class WebServiceController extends Controller {
 		$method = $this->request->param('Method');
 
 		$body = $this->request->getBody();
-
 		$requestType = strlen($body) > 0 ? 'POST' : (count($this->request->postVars()) > 0 ? 'POST' : 'GET');
 
 		$svc = $this->injector->get($service);
