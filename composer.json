@@ -1,0 +1,19 @@
+{
+	"name": "silverstripe/webservices",
+	"description": "A module for exposing service classes via web endpoints.",
+	"type": "silverstripe-module",
+	"keywords": ["silverstripe", "webservices"],
+	"license": "BSD-3-Clause",
+	"authors": [
+	{
+		"name": "Marcus Nyeholt",
+		"email": "marcus@silverstirpe.com.au"
+	}
+	],
+	"require":
+	{
+				"silverstripe/framework": "3.1.*@dev",
+                "silverstripe/cms": "3.1.*@dev",
+				"silverstripe/multivaluefield": "dev-master"
+	}
+}
