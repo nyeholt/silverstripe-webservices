@@ -16,7 +16,7 @@ meant to be accessible via GET and POST; it is RPC over HTTP.
 
 The master branch of this module is currently aiming for SilverStripe 3.1 compatibility
 
-* [SilverStripe 3.0 compatible version](https://github.com/nyeholt/silverstripe-webservices/tree/1.0)
+* [SilverStripe 3.0 compatible version](https://github.com/nyeholt/silverstripe-webservices/tree/2.0)
 * [SilverStripe 2.4 compatible version](https://github.com/nyeholt/silverstripe-webservices/tree/ss24)
 
 ## Requirements
