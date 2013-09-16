@@ -239,9 +239,9 @@ class WebServiceController extends Controller {
 		
 		unset($allArgs['url']);
 
-		$contentType = $this->request->getHeader('Content-Type');
+		$contentType = strtolower($this->request->getHeader('Content-Type'));
 
-		if ($contentType == 'application/json' && !count($allArgs) && strlen($this->request->getBody())) {
+		if (strpos($contentType, 'application/json') !== false && !count($allArgs) && strlen($this->request->getBody())) {
 			// decode the body to a params array
 			$bodyParams = Convert::json2array($this->request->getBody());
 			if (isset($bodyParams['params'])) {
