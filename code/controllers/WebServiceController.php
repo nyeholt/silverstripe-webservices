@@ -18,7 +18,7 @@ class WebServiceController extends Controller {
 	
 	protected $format = 'json';
 	
-	public static $dependencies = array(
+	private static $dependencies = array(
 		'webserviceAuthenticator'	=> '%$WebserviceAuthenticator',
 		'injector'					=> '%$Injector',
 	);

@@ -8,7 +8,7 @@
  */
 class WebserviceAuthenticator {
 	
-	public static $dependencies = array(
+	private static $dependencies = array(
 		'tokenAuthenticator'	=> '%$TokenAuthenticator',
 		// uncomment this to enable a basic hmac validator
 		// 'hmacValidator'			=> '%$WebserviceMethodHmacValidator',

@@ -7,7 +7,7 @@
  * @license BSD License http://silverstripe.org/bsd-license/
  */
 class TokenAccessible extends DataExtension {
-	public static $db = array(
+	private static $db = array(
 		'Token'				=> 'Varchar(32)',
 		'Active'			=> 'Boolean',
 		'AuthPrivateKey'	=> 'Varchar(64)',
