@@ -1,3 +1,9 @@
+3013-09-18 v3.0.1
+-----------------
+
+* Change the authentication logic to only check security ID for authentication
+  iff the user is already logged in.
+
 2013-09-16 v3.0.0
 -----------------
 

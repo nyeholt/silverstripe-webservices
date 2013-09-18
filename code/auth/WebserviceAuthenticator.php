@@ -48,9 +48,9 @@ class WebserviceAuthenticator {
 
 	public function authenticate(SS_HTTPRequest $request) {
 		$token = $this->getToken($request);
-		
+
 		$user = null;
-		
+
 		if ((!Member::currentUserID() && !$this->allowPublicAccess) || $token) {
 			if (!$token) {
 				throw new WebServiceException(403, "Missing token parameter");
@@ -59,18 +59,21 @@ class WebserviceAuthenticator {
 			if (!$user) {
 				throw new WebServiceException(403, "Invalid user token");
 			}
-		} else if ($this->allowSecurityId) {
-			// we check the SecurityID parameter
+		} else if ($this->allowSecurityId && Member::currentUserID()) {
+			// we check the SecurityID parameter for the current user
 			$secParam = SecurityToken::inst()->getName();
 			$securityID = $request->requestVar($secParam);
-			if ($securityID != SecurityToken::inst()->getValue()) {
+			if ($securityID && ($securityID != SecurityToken::inst()->getValue())) {
 				throw new WebServiceException(403, "Invalid security ID");
 			}
 			$user = Member::currentUser();
-		} else if (!$this->allowPublicAccess) {
+		} 
+		
+		if (!$user && !$this->allowPublicAccess) {
 			throw new WebServiceException(403, "Invalid request");
 		}
 
+		// now, if we have an hmacValidator in place, use it
 		if ($this->hmacValidator && $user) {
 			if (!$this->hmacValidator->validateHmac($user, $request)) {
 				throw new WebServiceException(403, "Invalid message");
