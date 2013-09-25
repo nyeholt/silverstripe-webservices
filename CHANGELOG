@@ -1,3 +1,9 @@
+2013-09-25 v3.0.2
+-----------------
+
+* Auth token no longer stored in CMS - users must take token from the CMS
+  soon after it's re-generated for use in client application
+
 3013-09-18 v3.0.1
 -----------------
 
