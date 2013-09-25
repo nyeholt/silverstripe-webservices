@@ -1,6 +1,9 @@
 
 # Web Services module
 
+Note: The SilverStripe 2.4 compatible version of this module is now in the 
+ss24 branch
+
 A module for exposing defined business logic via URLs, in web consumable
 formats, and for providing access to consumers of these webservices via 
 token access. 

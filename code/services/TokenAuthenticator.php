@@ -14,11 +14,16 @@ class TokenAuthenticator {
 	 * @param String $token
 	 */
 	public function authenticate($token) {
+		list($uid, $token) = explode(':', $token, 2);
 		// done directly against the DB because we don't have a user context yet
-		$user = DataObject::get_one('Member', '"Token" = \''.Convert::raw2sql($token).'\'');
+		$user = Member::get()->byID($uid);
 		if ($user && $user->exists()) {
-			$user->login(false);
-			return $user;
+			$hash = $user->encryptWithUserSettings($token);
+			// we're not comparing against the RawToken because we want the 'slow' process above to execute
+			if ($hash == $user->Token) {
+				$user->login(false);
+				return $user;
+			}
 		}
 	}
 }
