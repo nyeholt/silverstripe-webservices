@@ -133,7 +133,7 @@ class WebServiceController extends Controller {
 		$method = $this->request->param('Method');
 
 		$body = $this->request->getBody();
-		$requestType = strlen($body) > 0 ? 'POST' : (count($this->request->postVars()) > 0 ? 'POST' : 'GET');
+		$requestType = strlen($body) > 0 ? 'POST' : $this->request->httpMethod(); // (count($this->request->postVars()) > 0 ? 'POST' : 'GET');
 
 		$svc = $this->injector->get($service);
 		
