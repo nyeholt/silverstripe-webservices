@@ -1,4 +1,3 @@
-
 # Web Services module
 
 A module for exposing defined business logic via URLs, in web consumable
@@ -67,6 +66,7 @@ event_calendar module. You can create events for this using the following
 curl statement
 
     curl -X POST -d "token={your token here}&parentCalendar={ID of calendar}&title=My new event&content=This is an event on a day here and now&startDate=2012-04-21" http://{your site url}/jsonservice/calendarweb/createEvent
+    
 
 ### Passing DataObjects
 
@@ -136,7 +136,28 @@ sending a post such as
 
 will send the body of somefile.jpg in the $file variable, and $name == 'myfile.jpg'
 
+### Sending POST body
+
+Instead of passing parameters via the URL, you can send all method parameters
+in a JSON object that is the body of a POST request. For example, the JSON data
+
+```JSON
+{
+    "parentCalendar": "2",
+    "title": "This is a calendar event" 
+}
+```
+
+will pass the two fields as the parameters to whichever method is named by the
+URL. The important thing is that you MUST send the `Content-Type: application/json`
+header. 
+
+
 ### Tokens
+
+Authentication tokens can be passed either in the URL as the _token_ GET 
+parameter, or by including the `X-Auth-Token` header in the request. 
+
 
 The module will automatically add a 'Token' field to user objects, and
 generate a random token when a user account is created. This can be used
@@ -147,10 +168,10 @@ as a parameter (appropriately named, by default SecurityID) with the request
 which will grant the user access. This can be disabled by setting the 
 `allowPublicAccess` parameter for the WebserviceAuthenticator
 
-Injector:
-  WebserviceAuthenticator:
-    properties:
-      allowPublicAccess: 0
+    Injector:
+      WebserviceAuthenticator:
+        properties:
+          allowPublicAccess: 0
 
 	
 
