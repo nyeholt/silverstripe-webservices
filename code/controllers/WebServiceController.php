@@ -135,7 +135,7 @@ class WebServiceController extends Controller {
 	 * @return mixed
 	 */
 	public function handleService() {
-		$service = ucfirst($this->request->param('Service')) . 'Service';
+		$service = ucfirst($this->request->param('Service')) . 'WebService';
 		$method = $this->request->param('Method');
 
 		$body = $this->request->getBody();
