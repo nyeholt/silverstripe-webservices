@@ -47,7 +47,13 @@ class WebServiceController extends Controller {
 		);
 
 		$this->converters['xml'] = array(
+			'DataObject'		=> new DataObjectXmlConverter(),
+			'DataObjectSet'		=> new DataObjectSetXmlConverter(),
+			'DataList'			=> new DataObjectSetXmlConverter(),
+			'ArrayList'			=> new DataObjectSetXmlConverter(),
+			'Array'				=> new ArrayXmlConverter(),
 			'ScalarItem'		=> new ScalarXmlConverter(),
+			'stdClass'			=> new ScalarXmlConverter(),
 			'FinalConverter'	=> new FinalXmlConverter()
 		);
 
@@ -360,7 +366,7 @@ class ScalarJsonConverter {
 
 class ScalarXmlConverter {
 	public function convert($value) {
-		return $value;
+		return '<value>' . Convert::raw2xml($value) . '</value>';
 	}
 }
 
@@ -373,7 +379,7 @@ class FinalJsonConverter {
 
 class FinalXmlConverter {
 	public function convert($value) {
-		$return = '<response>'.Convert::raw2xml($value).'</response>';
+		$return = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" . '<response>'.$value.'</response>';
 		return $return;
 	}
 }
