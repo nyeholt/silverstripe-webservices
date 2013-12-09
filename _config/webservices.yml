@@ -1,0 +1,12 @@
+---
+Name: webapiroutes
+---
+
+Director:
+  rules:
+    'jsonservice//$Service/$Method' : WebServiceController
+    'xmlservice//$Service/$Method' : WebServiceController
+    
+Member:
+  extensions:
+    - TokenAccessible
