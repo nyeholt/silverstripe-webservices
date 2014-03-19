@@ -1,6 +1,6 @@
 {
 	"name": "silverstripe/webservices",
-	"description": "A module for exposing service classes via web endpoints.",
+	"description": "A module for exposing SilverStripe service classes via web endpoints as webservices.",
 	"type": "silverstripe-module",
 	"keywords": ["silverstripe", "webservices"],
 	"license": "BSD-3-Clause",
