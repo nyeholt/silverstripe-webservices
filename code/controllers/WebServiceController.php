@@ -34,7 +34,7 @@ class WebServiceController extends Controller {
 	public $injector;
 
 	public function init() {
-		parent::init();
+		
 		$this->converters['json'] = array(
 			'DataObject'		=> new DataObjectJsonConverter(),
 			'DataObjectSet'		=> new DataObjectSetJsonConverter(),
@@ -80,12 +80,7 @@ class WebServiceController extends Controller {
 
 			$this->extend('onBeforeInit');
 
-			$this->baseInitCalled = false;	
 			$this->init();
-			if(!$this->baseInitCalled) {
-				user_error("init() method on class '$this->class' doesn't call Controller::init()."
-					. "Make sure that you have parent::init() included.", E_USER_WARNING);
-			}
 
 			$this->extend('onAfterInit');
 			
