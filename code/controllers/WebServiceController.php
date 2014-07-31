@@ -33,6 +33,21 @@ class WebServiceController extends Controller {
 	 */
 	public $injector;
 
+    /**
+     * @var Zend_Log
+     */
+    public $logger;
+
+    /**
+     * @var boolean
+     */
+    public $recordExceptions = false;
+
+    /**
+     * @var boolean
+     */
+    public $recordResponses = false;
+
 	public function init() {
 		
 		$this->converters['json'] = array(
@@ -99,8 +114,13 @@ class WebServiceController extends Controller {
 				$response->addHeader('Content-Type', 'application/'.$this->format);
 			}
 			HTTP::add_cache_headers($this->response);
-			
-			return $response;
+
+            if ($this->recordResponses){
+                $this->log(json_encode($this->response->getBody()));
+            }
+
+            return $response;
+
 		} catch (WebServiceException $exception) {
 			$this->response = new SS_HTTPResponse();
 			$this->response->setStatusCode($exception->status);
@@ -119,6 +139,10 @@ class WebServiceController extends Controller {
 			$this->response->setStatusCode($code);
 			$this->response->setBody($this->ajaxResponse($exception->getMessage(), $code));
 		}
+
+        if ($this->recordExceptions){
+            $this->log(json_encode($this->response->getBody()), Zend_Log::ERR);
+        }
 		
 		return $this->response;
 	}
@@ -341,6 +365,12 @@ class WebServiceController extends Controller {
 			'status' => $status,
 		));
 	}
+
+    public function log($message, $priority = Zend_Log::INFO) {
+        if ($this->logger) {
+            $this->logger->log($message, $priority);
+        }
+    }
 	
 }
 
