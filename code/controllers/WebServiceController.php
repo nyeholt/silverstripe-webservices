@@ -200,6 +200,8 @@ class WebServiceController extends Controller {
 							if ($object) {
 								$params[$refParm->getName()] = $object;
 							}
+						} else {
+							$params[$refParm->getName()] = null;
 						}
 					} else if (isset($allArgs[$refParm->getName()])) {
 						$params[$refParm->getName()] = $allArgs[$refParm->getName()];
