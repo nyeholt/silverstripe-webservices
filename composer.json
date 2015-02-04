@@ -14,6 +14,6 @@
 	{
 				"silverstripe/framework": "3.1.*@dev",
                 "silverstripe/cms": "3.1.*@dev",
-				"silverstripe/multivaluefield": "dev-master"
+				"silverstripe/multivaluefield": "~2"
 	}
 }
