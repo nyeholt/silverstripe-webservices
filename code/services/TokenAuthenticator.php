@@ -21,9 +21,22 @@ class TokenAuthenticator {
 			$hash = $user->encryptWithUserSettings($token);
 			// we're not comparing against the RawToken because we want the 'slow' process above to execute
 			if ($hash == $user->Token) {
-				$user->login(false);
+				$this->loginUser($user);
 				return $user;
 			}
 		}
+	}
+	
+	/** 
+	 * Log a user in. 
+	 * 
+	 * Copies some code from Member::login, but doesn't do any writes or other checks like that
+	 * 
+	 * @param Member $member
+	 */
+	protected function loginUser($member) {
+		Member::session_regenerate_id();
+		Session::set("loggedInAs", $member->ID);
+		
 	}
 }
