@@ -173,7 +173,30 @@ which will grant the user access. This can be disabled by setting the
         properties:
           allowPublicAccess: 0
 
-	
+
+### Logging
+
+Below is a sample YAML configuration to enable logging on webservices.
+
+Copy this into `/mysite/_config/local.yml`
+
+    ---
+    Name: webservices_log
+    ---
+    Injector:
+      WebServiceControllerLogger:
+        class: Zend_Log_Writer_Stream
+        constructor:
+          - /var/log/silverstripe/webservices.log
+      WebServiceControllerLog:
+        class: Zend_Log
+        constructor:
+          - %$WebServiceControllerLogger
+      WebServiceController:
+        properties:
+          recordExceptions: 1
+          recordResponses: 0
+          logger: %$WebServiceControllerLog
 
 
 
