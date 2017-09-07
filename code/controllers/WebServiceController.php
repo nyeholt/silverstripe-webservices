@@ -261,7 +261,7 @@ class WebServiceController extends Controller {
 		for ($i = 0, $c = count($bits); $i < $c; ) {
 			$key = $bits[$i];
 			$val = isset($bits[$i + 1]) ? $bits[$i + 1] : null;
-			if ($val) {
+			if ($val && !isset($allArgs[$key])) {
 				$allArgs[$key] = $val;
 			}
 			$i += 2;
