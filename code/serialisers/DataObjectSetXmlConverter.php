@@ -11,7 +11,7 @@ class DataObjectSetXmlConverter {
 		$items = array();
 		
 		foreach ($set as $item) {
-			if ($item instanceof Object && $item->hasMethod('toFilteredMap')) {
+			if ($item instanceof SS_Object && $item->hasMethod('toFilteredMap')) {
 				$items[] = $item->toFilteredMap();
 			} else if (method_exists($item, 'toMap')) {
 				$items[] = $item->toMap();
