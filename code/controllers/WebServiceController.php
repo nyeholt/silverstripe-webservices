@@ -98,7 +98,7 @@ class WebServiceController extends Controller {
 			if ($response instanceof SS_HTTPResponse) {
 				$response->addHeader('Content-Type', 'application/'.$this->format);
 			}
-			HTTP::add_cache_headers($this->response);
+			// HTTP::add_cache_headers($this->response);
 			
 			return $response;
 		} catch (WebServiceException $exception) {
